@@ -10,7 +10,6 @@ export const PredictionService = {
     const match = await matchRepo.findOne({ where: { id: data.matchId } });
     if (!match) throw new Error('Partido no encontrado');
 
-    // Req 16: Registrar pronóstico antes del inicio
     if (match.status !== MatchStatus.SCHEDULED || new Date() >= match.matchDate) {
       throw new Error('El partido ya ha comenzado o finalizado. No se permiten pronósticos.');
     }
@@ -30,12 +29,11 @@ export const PredictionService = {
     
     const prediction = await predictionRepo.findOne({
       where: { id: predictionId, user: { id: userId } },
-      relations: ['match']
+      relations: { match: true } // ¡CORREGIDO AQUÍ!
     });
 
     if (!prediction) throw new Error('Pronóstico no encontrado');
 
-    // Req 17: Modificar pronóstico únicamente mientras no haya comenzado
     if (prediction.match.status !== MatchStatus.SCHEDULED || new Date() >= prediction.match.matchDate) {
       throw new Error('El partido ya ha comenzado. No se puede modificar el pronóstico.');
     }
@@ -50,7 +48,7 @@ export const PredictionService = {
     const predictionRepo = AppDataSource.getRepository(Prediction);
     return await predictionRepo.find({
       where: { user: { id: userId } },
-      relations: ['match'],
+      relations: { match: true }, // ¡CORREGIDO AQUÍ!
       order: { createdAt: 'DESC' }
     });
   }

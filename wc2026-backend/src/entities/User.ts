@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { GroupMember } from './GroupMember';
+import { GroupMember } from './GroupMembers';
 import { Prediction } from './Prediction';
 import { Group } from './Group';
 

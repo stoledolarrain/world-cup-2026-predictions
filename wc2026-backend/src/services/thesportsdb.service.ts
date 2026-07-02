@@ -2,7 +2,7 @@ import axios from 'axios';
 import { AppDataSource } from '../config/database';
 import { Match, MatchStatus } from '../entities/Match';
 import { Prediction } from '../entities/Prediction';
-import { GroupMember } from '../entities/GroupMember';
+import { GroupMember } from '../entities/GroupMembers';
 
 export const TheSportsDBService = {
   async syncMatchScores() {
@@ -39,7 +39,7 @@ export const TheSportsDBService = {
             // Req 11: Calcular puntos de las predicciones para este partido
             const predictions = await predictionRepo.find({
               where: { match: { id: match.id } },
-              relations: ['user']
+              relations: { user: true }
             });
 
             for (const pred of predictions) {

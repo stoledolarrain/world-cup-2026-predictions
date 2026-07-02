@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './User';
-import { GroupMember } from './GroupMember';
+import { GroupMember } from './GroupMembers';
 
 @Entity('groups')
 export class Group {
