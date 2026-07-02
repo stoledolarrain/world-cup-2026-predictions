@@ -10,7 +10,6 @@ export const TheSportsDBService = {
     const predictionRepo = AppDataSource.getRepository(Prediction);
     const groupMemberRepo = AppDataSource.getRepository(GroupMember);
 
-    // Obtener los partidos que están pendientes o en juego para actualizar
     const activeMatches = await matchRepo.find({
       where: [
         { status: MatchStatus.SCHEDULED },
@@ -32,11 +31,9 @@ export const TheSportsDBService = {
           match.homeScore = parseInt(eventData.intHomeScore);
           match.awayScore = parseInt(eventData.intAwayScore);
           
-          // Si el estado en la API indica que finalizó, actualizamos el status
           if (eventData.strStatus === 'Match Finished') {
             match.status = MatchStatus.FINISHED;
             
-            // Req 11: Calcular puntos de las predicciones para este partido
             const predictions = await predictionRepo.find({
               where: { match: { id: match.id } },
               relations: { user: true }
@@ -52,7 +49,6 @@ export const TheSportsDBService = {
                 pred.pointsEarned = points;
                 await predictionRepo.save(pred);
 
-                // Sumar puntos al perfil del usuario en todos sus grupos
                 const memberships = await groupMemberRepo.find({
                   where: { user: { id: pred.user.id } }
                 });
@@ -75,14 +71,11 @@ export const TheSportsDBService = {
     }
   },
 
-  // Algoritmo de puntuación definido por los desarrolladores (Req 11)
   calculatePoints(predHome: number, predAway: number, actualHome: number, actualAway: number): number {
-    // Acierto exacto del marcador (3 puntos)
     if (predHome === actualHome && predAway === actualAway) {
       return 3;
     }
 
-    // Acierto solo de ganador o empate (1 punto)
     const predResult = predHome > predAway ? 'HOME' : predHome < predAway ? 'AWAY' : 'DRAW';
     const actualResult = actualHome > actualAway ? 'HOME' : actualHome < actualAway ? 'AWAY' : 'DRAW';
 
@@ -90,7 +83,6 @@ export const TheSportsDBService = {
       return 1;
     }
 
-    // Sin puntos
     return 0;
   }
 };

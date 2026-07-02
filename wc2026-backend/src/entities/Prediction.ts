@@ -14,7 +14,7 @@ export class Prediction {
   predictedAwayScore!: number;
 
   @Column({ type: 'int', default: 0 })
-  pointsEarned!: number; // 3 puntos exacto, 1 punto ganador, etc.
+  pointsEarned!: number; 
 
   @ManyToOne(() => User, user => user.predictions)
   user!: User;

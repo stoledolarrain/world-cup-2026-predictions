@@ -52,7 +52,6 @@ export const GroupService = {
     const memberRepo = AppDataSource.getRepository(GroupMember);
     const memberships = await memberRepo.find({
       where: { user: { id: userId } },
-      // ¡CORREGIDO AQUÍ! (Relaciones anidadas en v0.3)
       relations: { 
         group: {
           owner: true
@@ -66,7 +65,7 @@ export const GroupService = {
     const memberRepo = AppDataSource.getRepository(GroupMember);
     return await memberRepo.find({
       where: { group: { id: groupId } },
-      relations: { user: true }, // ¡CORREGIDO AQUÍ!
+      relations: { user: true }, 
       order: { totalPoints: 'DESC' }
     });
   }

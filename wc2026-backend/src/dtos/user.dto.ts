@@ -1,7 +1,7 @@
 export interface RegisterUserDto {
   name: string;
   email: string;
-  password?: string; // Opcional al recibir, obligatorio al guardar
+  password?: string;
 }
 
 export interface LoginUserDto {

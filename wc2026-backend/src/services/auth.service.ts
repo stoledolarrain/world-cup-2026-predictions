@@ -11,7 +11,6 @@ export const AuthService = {
     
     const hashedPassword = await bcrypt.hash(data.password, 10);
     
-    // Forzamos a TypeScript a entender que esto es un único objeto User
     const newUser = userRepository.create({
       ...data,
       password: hashedPassword
@@ -19,7 +18,6 @@ export const AuthService = {
     
     await userRepository.save(newUser);
     
-    // Forma segura de quitar el password para la respuesta
     const userResponse = { ...newUser };
     delete (userResponse as any).password;
     
@@ -47,13 +45,45 @@ export const AuthService = {
     return { token, user: userResponse };
   },
 
+  async getProfile(userId: string) {
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { id: userId } });
+    
+    if (!user) throw new Error('Usuario no encontrado');
+
+    const userResponse = { ...user };
+    delete (userResponse as any).password;
+    
+    return userResponse;
+  },
+
+  async updateProfile(userId: string, data: any) {
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { id: userId } });
+    
+    if (!user) throw new Error('Usuario no encontrado');
+
+    // Si el usuario envía una nueva contraseña, la encriptamos antes de guardar
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+
+    userRepository.merge(user, data);
+    await userRepository.save(user);
+
+    const userResponse = { ...user };
+    delete (userResponse as any).password;
+    
+    return userResponse;
+  },
+
   async getDashboardSummary(userId: string) {
     const groupMemberRepo = AppDataSource.getRepository(GroupMember);
     const matchRepo = AppDataSource.getRepository(Match);
 
     const memberships = await groupMemberRepo.find({
       where: { user: { id: userId } },
-      relations: { group: true } // ¡CORREGIDO AQUÍ!
+      relations: { group: true } 
     });
 
     const totalGroups = memberships.length;

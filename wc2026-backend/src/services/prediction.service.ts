@@ -29,7 +29,7 @@ export const PredictionService = {
     
     const prediction = await predictionRepo.findOne({
       where: { id: predictionId, user: { id: userId } },
-      relations: { match: true } // ¡CORREGIDO AQUÍ!
+      relations: { match: true } 
     });
 
     if (!prediction) throw new Error('Pronóstico no encontrado');
@@ -48,7 +48,7 @@ export const PredictionService = {
     const predictionRepo = AppDataSource.getRepository(Prediction);
     return await predictionRepo.find({
       where: { user: { id: userId } },
-      relations: { match: true }, // ¡CORREGIDO AQUÍ!
+      relations: { match: true },
       order: { createdAt: 'DESC' }
     });
   }

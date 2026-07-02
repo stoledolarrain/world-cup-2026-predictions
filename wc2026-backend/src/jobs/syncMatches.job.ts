@@ -2,16 +2,15 @@ import cron from 'node-cron';
 import { TheSportsDBService } from '../services/thesportsdb.service';
 
 export const startCronJobs = () => {
-  // La expresión cron '*/20 * * * *' significa: "Ejecutar cada 20 minutos"
   cron.schedule('*/20 * * * *', async () => {
-    console.log('⏳ Ejecutando sincronización automática de partidos...');
+    console.log('Ejecutando sincronización automática de partidos...');
     try {
       await TheSportsDBService.syncMatchScores();
-      console.log('✅ Sincronización de marcadores completada con éxito.');
+      console.log('Sincronización de marcadores completada con éxito.');
     } catch (error) {
-      console.error('❌ Error durante la sincronización automática:', error);
+      console.error('Error durante la sincronización automática:', error);
     }
   });
 
-  console.log('⏰ Cron Jobs iniciados (Sincronización configurada cada 20 minutos).');
+  console.log('Cron Jobs iniciados (Sincronización configurada cada 20 minutos).');
 };
