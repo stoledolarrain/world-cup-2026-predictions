@@ -1,18 +1,24 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import useGroupDetail from "../hooks/useGroupDetail";
 import { Trophy, ArrowLeft, Users, Copy, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
 
 export default function GroupDetail() {
-  const { groupId } = useParams(); // Obtenemos el ID del grupo de la URL
-  const { leaderboard, inviteCode, isLoading, error, fetchGroupDetails } =
-    useGroupDetail(groupId);
+  const { groupId } = useParams();
+  const {
+    leaderboard = [],
+    inviteCode = "",
+    isLoading,
+    error,
+    fetchGroupDetails,
+  } = useGroupDetail(groupId);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetchGroupDetails();
-  }, [fetchGroupDetails]);
+    if (groupId) {
+      fetchGroupDetails();
+    }
+  }, [groupId, fetchGroupDetails]);
 
   const handleCopyCode = () => {
     if (inviteCode) {
@@ -27,7 +33,7 @@ export default function GroupDetail() {
       {/* Navegación Superior */}
       <Link
         to="/groups"
-        className="inline-flex items-center gap-2 text-surface-dark/60 hover:text-primary transition-colors font-medium"
+        className="inline-flex items-center gap-2 text-surface-dark/60 hover:text-primary transition-colors font-medium min-h-[44px]"
       >
         <ArrowLeft className="w-5 h-5" />
         Volver a Mis Grupos
@@ -40,7 +46,8 @@ export default function GroupDetail() {
             Clasificación del Grupo
           </h1>
           <p className="text-surface-dark/60 mt-1 flex items-center gap-2">
-            <Users className="w-4 h-4" /> {leaderboard.length} Participantes
+            <Users className="w-4 h-4" /> {leaderboard?.length || 0}{" "}
+            Participantes
           </p>
         </div>
 
@@ -80,6 +87,7 @@ export default function GroupDetail() {
           {error}
         </div>
       )}
+
       {isLoading && (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -87,73 +95,79 @@ export default function GroupDetail() {
       )}
 
       {/* Tabla de Posiciones */}
-      {!isLoading && !error && leaderboard.length > 0 && (
-        <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-muted border-b border-border text-surface-dark/70 text-sm uppercase tracking-wider">
-                  <th className="p-4 font-semibold w-24 text-center">Pos</th>
-                  <th className="p-4 font-semibold">Jugador</th>
-                  <th className="p-4 font-semibold text-right">Puntos</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {leaderboard.map((user, index) => {
-                  const position = index + 1;
-                  const isTop3 = position <= 3;
+      {!isLoading &&
+        !error &&
+        Array.isArray(leaderboard) &&
+        leaderboard.length > 0 && (
+          <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-muted border-b border-border text-surface-dark/70 text-sm uppercase tracking-wider">
+                    <th className="p-4 font-semibold w-24 text-center">Pos</th>
+                    <th className="p-4 font-semibold">Jugador</th>
+                    <th className="p-4 font-semibold text-right">Puntos</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {leaderboard.map((user, index) => {
+                    const position = index + 1;
+                    const isTop3 = position <= 3;
 
-                  return (
-                    <tr
-                      key={user.userId || user.id || index}
-                      className="hover:bg-surface-muted/50 transition-colors"
-                    >
-                      <td className="p-4 text-center">
-                        <div
-                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
-                            position === 1
-                              ? "bg-yellow-100 text-yellow-700 border-2 border-yellow-400 shadow-sm"
-                              : position === 2
-                                ? "bg-gray-100 text-gray-700 border-2 border-gray-300"
-                                : position === 3
-                                  ? "bg-orange-100 text-orange-800 border-2 border-orange-300"
-                                  : "text-surface-dark/60 font-medium"
-                          }`}
-                        >
-                          {position}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="font-bold text-surface-dark">
-                          {user.name || user.userName || "Usuario"}
-                        </div>
-                        {isTop3 && (
-                          <div className="text-xs text-primary font-medium mt-0.5">
-                            En zona de premio
+                    return (
+                      <tr
+                        key={user?.userId || user?.id || index}
+                        className="hover:bg-surface-muted/50 transition-colors"
+                      >
+                        <td className="p-4 text-center">
+                          <div
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
+                              position === 1
+                                ? "bg-yellow-100 text-yellow-700 border-2 border-yellow-400 shadow-sm"
+                                : position === 2
+                                  ? "bg-gray-100 text-gray-700 border-2 border-gray-300"
+                                  : position === 3
+                                    ? "bg-orange-100 text-orange-800 border-2 border-orange-300"
+                                    : "text-surface-dark/60 font-medium"
+                            }`}
+                          >
+                            {position}
                           </div>
-                        )}
-                      </td>
-                      <td className="p-4 text-right">
-                        <span className="inline-block bg-surface-muted px-3 py-1 rounded-md font-black text-lg text-surface-dark border border-border">
-                          {user.points || user.score || 0} pts
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="p-4">
+                          <div className="font-bold text-surface-dark">
+                            {user?.name || user?.userName || "Usuario"}
+                          </div>
+                          {isTop3 && (
+                            <div className="text-xs text-primary font-medium mt-0.5">
+                              En zona de premio
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <span className="inline-block bg-surface-muted px-3 py-1 rounded-md font-black text-lg text-surface-dark border border-border">
+                            {user?.points || user?.score || 0} pts
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {!isLoading && !error && leaderboard.length === 0 && (
-        <div className="text-center py-20 bg-surface rounded-xl border border-border">
-          <p className="text-surface-dark/60">
-            No hay participantes en este grupo aún.
-          </p>
-        </div>
-      )}
+      {/* Empty State */}
+      {!isLoading &&
+        !error &&
+        (!Array.isArray(leaderboard) || leaderboard.length === 0) && (
+          <div className="text-center py-20 bg-surface rounded-xl border border-border">
+            <p className="text-surface-dark/60">
+              No hay participantes en este grupo aún.
+            </p>
+          </div>
+        )}
     </div>
   );
 }

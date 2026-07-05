@@ -13,26 +13,33 @@ export default function useGroupDetail(groupId) {
     setError(null);
 
     try {
-      // Hacemos las peticiones en paralelo para que cargue más rápido
+      // Hacemos las peticiones previniendo que una falla rompa la otra
       const [leaderboardRes, inviteRes] = await Promise.all([
-        api.get(`/groups/${groupId}/leaderboard`),
-        api
-          .get(`/groups/${groupId}/invite`)
-          .catch(() => ({ data: { code: "" } })), // Prevenimos fallos si no hay código
+        api.get(`/groups/${groupId}/leaderboard`).catch((err) => {
+          console.error("Error obteniendo leaderboard:", err);
+          return { data: [] }; // Fallback seguro
+        }),
+        api.get(`/groups/${groupId}/invite`).catch((err) => {
+          console.error("Error obteniendo código:", err);
+          return { data: { code: "" } }; // Fallback seguro
+        }),
       ]);
 
-      // Adaptación defensiva para el leaderboard
+      // Lógica hiper-defensiva para el leaderboard
       let boardData = [];
-      if (Array.isArray(leaderboardRes.data)) boardData = leaderboardRes.data;
-      else if (leaderboardRes.data?.leaderboard)
+      if (Array.isArray(leaderboardRes?.data)) {
+        boardData = leaderboardRes.data;
+      } else if (Array.isArray(leaderboardRes?.data?.leaderboard)) {
         boardData = leaderboardRes.data.leaderboard;
-      else if (leaderboardRes.data?.data) boardData = leaderboardRes.data.data;
+      } else if (Array.isArray(leaderboardRes?.data?.data)) {
+        boardData = leaderboardRes.data.data;
+      }
 
       setLeaderboard(boardData);
-      setInviteCode(inviteRes.data?.code || inviteRes.data?.inviteCode || "");
+      setInviteCode(inviteRes?.data?.code || inviteRes?.data?.inviteCode || "");
     } catch (err) {
       setError("Error al cargar la información del grupo.");
-      console.error(err);
+      console.error("Error general en el detalle del grupo:", err);
     } finally {
       setIsLoading(false);
     }
