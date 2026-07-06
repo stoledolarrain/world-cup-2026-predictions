@@ -1,23 +1,14 @@
-import { Router } from 'express';
-import { MatchController } from '../controllers/match.controller';
-import { authMiddleware } from '../middlewares/auth.middleware';
-import { adminMiddleware } from '../middlewares/admin.middleware';
+import { Router } from "express";
+import { MatchController } from "../controllers/match.controller";
 
 const router = Router();
 
-router.use(authMiddleware); 
+// Ruta para cargar partidos manualmente (Ejecutar una vez)
+router.get("/seed", MatchController.seedMatches);
 
-
-router.get('/', MatchController.getMatches);
-
-router.get('/:matchId', MatchController.getMatchById);
-
-
-
-router.post('/', adminMiddleware, MatchController.createMatch);
-router.post('/', MatchController.createMatch);
-
-router.put('/:matchId', adminMiddleware, MatchController.updateMatch);
-router.put('/:matchId', MatchController.updateMatch);
+// Tus otras rutas existentes
+router.get("/", MatchController.getMatches);
+router.post("/", MatchController.createMatch);
+router.put("/:matchId", MatchController.updateMatch);
 
 export default router;

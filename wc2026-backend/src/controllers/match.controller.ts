@@ -1,21 +1,13 @@
-import { Request, Response, NextFunction } from 'express';
-import { MatchService } from '../services/match.service';
+import { Request, Response, NextFunction } from "express";
+import { MatchService } from "../services/match.service";
+import { TheSportsDBService } from "../services/thesportsdb.service";
 
 export const MatchController = {
   async getMatches(req: Request, res: Response, next: NextFunction) {
     try {
-      const { stage, date, status } = req.query; 
+      const { stage, date, status } = req.query;
       const matches = await MatchService.getMatches({ stage, date, status });
       res.status(200).json({ data: matches });
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  async getMatchById(req: Request, res: Response, next: NextFunction) {
-    try {
-      const matchId = req.params.matchId as string;
-      res.status(200).json({ message: 'Detalle del partido' });
     } catch (error) {
       next(error);
     }
@@ -24,7 +16,7 @@ export const MatchController = {
   async createMatch(req: Request, res: Response, next: NextFunction) {
     try {
       const newMatch = await MatchService.createMatch(req.body);
-      res.status(201).json({ message: 'Partido registrado', data: newMatch });
+      res.status(201).json({ message: "Partido registrado", data: newMatch });
     } catch (error) {
       next(error);
     }
@@ -34,9 +26,21 @@ export const MatchController = {
     try {
       const matchId = req.params.matchId as string;
       const updatedMatch = await MatchService.updateMatch(matchId, req.body);
-      res.status(200).json({ message: 'Partido actualizado', data: updatedMatch });
+      res
+        .status(200)
+        .json({ message: "Partido actualizado", data: updatedMatch });
     } catch (error) {
       next(error);
     }
-  }
+  },
+
+  async seedMatches(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Reemplaza '4328' por el ID correcto de la liga si es necesario
+      const result = await TheSportsDBService.fetchAndSaveAllMatches("4328");
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
