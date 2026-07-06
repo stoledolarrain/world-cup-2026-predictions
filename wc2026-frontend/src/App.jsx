@@ -1,63 +1,52 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import Header from "./components/layout/Header";
-import ProtectedRoute from "./components/layout/ProtectedRoute";
-import DashboardLayout from "./components/layout/DashboardLayout";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Matches from "./pages/Matches"; // El componente real importado
-import Groups from "./pages/Groups"; // El componente real importado
-import GroupDetail from "./pages/GroupDetail"; // El componente real importado
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/layout/ProtectedRoute';
+import Header from './components/layout/Header';
 
-// Mantenemos solo los placeholders de las vistas que aún no hemos construido
-const GroupsPlaceholder = () => <div className="p-6">Vista de Grupos</div>;
-const PredictionsPlaceholder = () => (
-  <div className="p-6">Vista de Pronósticos</div>
-);
+// Importación de las páginas principales
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Matches from './pages/Matches';
+import Groups from './pages/Groups';
+import GroupDetail from './pages/GroupDetail'; // ¡Añadido para solucionar el error!
+import Predictions from './pages/Predictions';
+import Profile from './pages/Profile';
 
-const NotFound = () => (
-  <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center p-4">
-    <h1 className="text-4xl font-bold text-surface-dark mb-2">404</h1>
-    <p className="text-surface-dark/70 mb-6">La página que buscas no existe.</p>
-    <a href="/" className="text-primary font-medium hover:underline">
-      Volver al inicio
-    </a>
-  </div>
-);
+// Importación de las vistas del Administrador
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageMatches from './pages/admin/ManageMatches';
 
-export default function App() {
+function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen flex flex-col bg-surface-muted">
+        <div className="min-h-screen bg-gray-50">
           <Header />
-
-          <main className="flex-grow">
+          <main className="container px-4 py-8 mx-auto">
             <Routes>
               {/* Rutas Públicas */}
-              <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-
-              {/* Rutas Privadas: Envueltas en el ProtectedRoute y el DashboardLayout */}
+              
+              {/* Rutas Protegidas (Solo usuarios logueados) */}
               <Route element={<ProtectedRoute />}>
-                <Route element={<DashboardLayout />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/groups" element={<Groups />} />
-                  <Route path="/groups" element={<Groups />} />
-                  <Route path="/groups/:groupId" element={<GroupDetail />} />
-                  {/* CORRECCIÓN: Renderizamos el componente real <Matches /> */}
-                  <Route path="/matches" element={<Matches />} />
-                  <Route
-                    path="/predictions"
-                    element={<PredictionsPlaceholder />}
-                  />
-                </Route>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/matches" element={<Matches />} />
+                <Route path="/groups" element={<Groups />} />
+                <Route path="/groups/:groupId" element={<GroupDetail />} />
+                <Route path="/predictions" element={<Predictions />} />
+                <Route path="/profile" element={<Profile />} />
               </Route>
-
-              <Route path="*" element={<NotFound />} />
+              
+              {/* Rutas Exclusivas de Administrador */}
+              <Route element={<ProtectedRoute requireAdmin={true} />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/matches" element={<ManageMatches />} />
+              </Route>
+              
+              {/* Ruta por defecto */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </main>
         </div>
@@ -65,3 +54,5 @@ export default function App() {
     </AuthProvider>
   );
 }
+
+export default App;

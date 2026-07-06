@@ -21,9 +21,7 @@ export const TheSportsDBService = {
       if (!match.externalApiId) continue;
 
       try {
-        // Req 32: API gratuita de thesportsdb.com
-        // Nota: URL de ejemplo, se debe usar el endpoint real según la documentación de la API
-        const response = await axios.get(`https://www.thesportsdb.com/api/v1/json/3/lookupevent.php?id=${match.externalApiId}`);
+        const response = await axios.get(`https://www.thesportsdb.com/api/v1/json/123/lookupevent.php?id=${match.externalApiId}`);
         const eventData = response.data.events?.[0];
 
         if (eventData && eventData.intHomeScore !== null && eventData.intAwayScore !== null) {
