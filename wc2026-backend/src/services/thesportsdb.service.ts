@@ -4,7 +4,6 @@ import { Match, MatchStatus } from "../entities/Match";
 import { Prediction } from "../entities/Prediction";
 import { GroupMember } from "../entities/GroupMembers";
 
-// Obtenemos la API Key desde las variables de entorno
 const API_KEY = process.env.THESPORTSDB_API_KEY;
 
 if (!API_KEY) {
@@ -17,36 +16,98 @@ export const TheSportsDBService = {
   // --- CARGA MASIVA DE PARTIDOS ---
   async fetchAndSaveAllMatches(leagueId: string) {
     const matchRepo = AppDataSource.getRepository(Match);
-    const url = `https://www.thesportsdb.com/api/v1/json/${API_KEY}/eventsnextleague.php?id=${leagueId}`;
+
+    // Mantenemos 2026 como solicitaste
+    const url = `https://www.thesportsdb.com/api/v1/json/${API_KEY}/eventsseason.php?id=${leagueId}&s=2026`;
 
     try {
       const response = await axios.get(url);
       const events = response.data.events;
 
-      if (!events) throw new Error("No se encontraron eventos en la API");
+      if (!events) {
+        throw new Error(
+          "No se encontraron eventos en la API para esta temporada",
+        );
+      }
 
       for (const event of events) {
-        // Verificamos si ya existe para evitar duplicados
-        const exists = await matchRepo.findOne({
+        let match = await matchRepo.findOne({
           where: { externalApiId: event.idEvent },
         });
 
-        if (!exists) {
-          const newMatch = matchRepo.create({
+        let apiStatus = MatchStatus.SCHEDULED;
+        let apiHomeScore = 0;
+        let apiAwayScore = 0;
+        const matchDate = new Date(
+          event.dateEvent + "T" + (event.strTime || "00:00:00"),
+        );
+
+        // 1. Verificamos si la API ya trae goles (para el futuro cuando sea real)
+        if (event.intHomeScore !== null && event.intHomeScore !== "") {
+          apiHomeScore = parseInt(event.intHomeScore) || 0;
+          apiAwayScore = parseInt(event.intAwayScore) || 0;
+          apiStatus = MatchStatus.FINISHED;
+        } else {
+          // =========================================================
+          // 🚀 MODO SIMULADOR: RESULTADOS FICTICIOS PARA PRUEBAS 2026
+          // =========================================================
+          // Si el partido no trae goles pero su fecha ya es menor a "hoy",
+          // le inventamos un resultado aleatorio para que puedas probar.
+          if (matchDate.getTime() < new Date().getTime()) {
+            apiHomeScore = Math.floor(Math.random() * 4); // Goles de 0 a 3
+            apiAwayScore = Math.floor(Math.random() * 4); // Goles de 0 a 3
+            apiStatus = MatchStatus.FINISHED;
+          }
+        }
+
+        // Validación extra de estado
+        const statusStr = event.strStatus ? String(event.strStatus).trim() : "";
+        if (
+          statusStr === "Match Finished" ||
+          statusStr === "Finished" ||
+          statusStr === "FT"
+        ) {
+          apiStatus = MatchStatus.FINISHED;
+        } else if (
+          statusStr === "In Play" ||
+          statusStr === "HT" ||
+          statusStr === "Live"
+        ) {
+          apiStatus = MatchStatus.IN_PLAY;
+        }
+
+        if (!match) {
+          match = matchRepo.create({
             homeTeam: event.strHomeTeam,
             awayTeam: event.strAwayTeam,
-            matchDate: new Date(event.dateEvent),
+            homeTeamBadge: event.strHomeTeamBadge || "",
+            awayTeamBadge: event.strAwayTeamBadge || "",
+            matchDate: matchDate,
             stage: event.strEvent || "Fase de Grupos",
             stadiumCity: `${event.strVenue || "Estadio"}, ${event.strCity || "Ciudad"}`,
-            status: MatchStatus.SCHEDULED,
+            status: apiStatus,
             externalApiId: event.idEvent,
-            homeScore: 0,
-            awayScore: 0,
+            homeScore: apiHomeScore,
+            awayScore: apiAwayScore,
           });
-          await matchRepo.save(newMatch);
+        } else {
+          // Actualizamos
+          match.homeTeamBadge = event.strHomeTeamBadge || "";
+          match.awayTeamBadge = event.strAwayTeamBadge || "";
+          match.matchDate = matchDate;
+          match.stage = event.strEvent || match.stage;
+          match.stadiumCity = `${event.strVenue || "Estadio"}, ${event.strCity || "Ciudad"}`;
+          match.status = apiStatus;
+          match.homeScore = apiHomeScore;
+          match.awayScore = apiAwayScore;
         }
+
+        await matchRepo.save(match);
       }
-      return { message: "Partidos cargados exitosamente" };
+      return {
+        message:
+          "Todos los partidos 2026 y resultados simulados cargados exitosamente",
+      };
     } catch (error) {
       console.error("Error en fetchAndSaveAllMatches:", error);
       throw error;
@@ -85,7 +146,6 @@ export const TheSportsDBService = {
           if (eventData.strStatus === "Match Finished") {
             match.status = MatchStatus.FINISHED;
 
-            // Lógica de cálculo de puntos existente
             const predictions = await predictionRepo.find({
               where: { match: { id: match.id } },
               relations: { user: true },

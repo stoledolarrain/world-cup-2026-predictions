@@ -36,8 +36,8 @@ export const MatchController = {
 
   async seedMatches(req: Request, res: Response, next: NextFunction) {
     try {
-      // Reemplaza '4328' por el ID correcto de la liga si es necesario
-      const result = await TheSportsDBService.fetchAndSaveAllMatches("4328");
+      const leagueId = process.env.ID_LIGA_MUNDIAL || "4429";
+      const result = await TheSportsDBService.fetchAndSaveAllMatches(leagueId);
       res.status(200).json(result);
     } catch (error) {
       next(error);

@@ -28,6 +28,13 @@ export class Match {
   @Column({ type: "varchar", length: 100 })
   awayTeam!: string;
 
+  // NUEVAS COLUMNAS PARA LOS ESCUDOS
+  @Column({ type: "varchar", nullable: true })
+  homeTeamBadge!: string;
+
+  @Column({ type: "varchar", nullable: true })
+  awayTeamBadge!: string;
+
   @Column({ type: "int", nullable: true })
   homeScore!: number;
 
@@ -46,6 +53,7 @@ export class Match {
   @Column({ type: "enum", enum: MatchStatus, default: MatchStatus.SCHEDULED })
   status!: MatchStatus;
 
+  // Relación con las predicciones
   @OneToMany(() => Prediction, (prediction) => prediction.match)
   predictions!: Prediction[];
 

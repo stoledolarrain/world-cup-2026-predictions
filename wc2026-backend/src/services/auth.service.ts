@@ -9,7 +9,6 @@ export const AuthService = {
   async register(data: any) {
     const userRepository = AppDataSource.getRepository(User);
 
-    // 1. Validar que el usuario no exista para evitar errores SQL genéricos
     const existingUser = await userRepository.findOne({
       where: { email: data.email },
     });
@@ -18,8 +17,6 @@ export const AuthService = {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // 2. FIX DE SEGURIDAD: Asignación explícita en lugar de "...data"
-    // Esto evita que un usuario inyecte el rol "ADMIN" por la fuerza.
     const newUser = userRepository.create({
       name: data.name,
       email: data.email,
@@ -43,7 +40,6 @@ export const AuthService = {
     const isValid = await bcrypt.compare(pass, user.password);
     if (!isValid) throw new Error("Credenciales inválidas");
 
-    // 3. DEBUG CLAVE: Validar que el entorno tenga el secreto antes de que jwt explote
     if (!process.env.JWT_SECRET) {
       console.error(
         "ERROR CRÍTICO: JWT_SECRET no está definido en process.env",
@@ -81,7 +77,6 @@ export const AuthService = {
 
     if (!user) throw new Error("Usuario no encontrado");
 
-    // Si el usuario envía una nueva contraseña, la encriptamos antes de guardar
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
     }
