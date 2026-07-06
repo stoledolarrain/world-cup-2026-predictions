@@ -5,13 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "../hooks/useAuth";
 import { loginService } from "../services/auth.service";
+import { Trophy, AlertCircle, Loader2 } from "lucide-react";
 
-// Reglas de validación del formulario con Zod
 const loginSchema = z.object({
   email: z
     .string()
-    .min(1, "El correo electrónico es obligatorio")
-    .email("Formato de correo inválido"),
+    .min(1, "El correo es obligatorio")
+    .email("Formato inválido"),
   password: z.string().min(1, "La contraseña es obligatoria"),
 });
 
@@ -24,109 +24,100 @@ const Login = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(loginSchema),
-  });
+  } = useForm({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data) => {
     try {
       const response = await loginService(data.email, data.password);
-      // response.user y response.token deben existir
       login(response.user, response.token);
       navigate("/dashboard");
     } catch (error) {
-      console.error("Error en Login:", error);
-      setApiError("Credenciales incorrectas o error de servidor");
+      setApiError("Las credenciales son incorrectas.");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background px-4">
-      <div className="w-full max-w-md p-8 bg-surface border border-border rounded-xl shadow-sm">
-        <h2 className="mb-6 text-3xl font-bold text-center text-foreground tracking-tight">
-          Quiniela Mundial 2026
-        </h2>
-
-        {/* Alerta de Error Accesible */}
-        {apiError && (
-          <div
-            role="alert"
-            aria-live="polite"
-            className="p-4 mb-6 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
-          >
-            {apiError}
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Branding Section */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-600/20">
+            <Trophy size={32} />
           </div>
-        )}
+          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-gray-900">
+            Bienvenido de nuevo
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Accede a tus pronósticos del Mundial 2026
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-foreground"
-            >
-              Correo Electrónico
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register("email")}
-              aria-invalid={!!errors.email}
-              className={`w-full p-2.5 bg-background text-foreground border rounded-md transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent ${
-                errors.email
-                  ? "border-destructive focus-visible:ring-destructive"
-                  : "border-input hover:border-border"
-              }`}
-              placeholder="admin@quiniela.com"
-            />
-            {errors.email && (
-              <p role="alert" className="text-xs font-medium text-destructive">
-                {errors.email.message}
-              </p>
+        {/* Login Card */}
+        <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {apiError && (
+              <div className="flex items-center gap-2 rounded-lg bg-red-50 p-4 text-sm text-red-600">
+                <AlertCircle size={16} />
+                {apiError}
+              </div>
             )}
-          </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-foreground"
+            <div className="space-y-2">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="email"
+              >
+                Correo electrónico
+              </label>
+              <input
+                id="email"
+                {...register("email")}
+                className={`w-full rounded-lg border px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${errors.email ? "border-red-500 focus:border-red-500" : "border-gray-200 focus:border-blue-500"}`}
+                placeholder="usuario@ejemplo.com"
+              />
+              {errors.email && (
+                <p className="text-xs text-red-500">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="password"
+              >
+                Contraseña
+              </label>
+              <input
+                id="password"
+                type="password"
+                {...register("password")}
+                className={`w-full rounded-lg border px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-blue-500/20 ${errors.password ? "border-red-500 focus:border-red-500" : "border-gray-200 focus:border-blue-500"}`}
+                placeholder="••••••••"
+              />
+              {errors.password && (
+                <p className="text-xs text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex w-full min-h-[48px] items-center justify-center rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-700 disabled:bg-blue-300 active:scale-[0.98]"
             >
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              {...register("password")}
-              aria-invalid={!!errors.password}
-              className={`w-full p-2.5 bg-background text-foreground border rounded-md transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent ${
-                errors.password
-                  ? "border-destructive focus-visible:ring-destructive"
-                  : "border-input hover:border-border"
-              }`}
-              placeholder="••••••••"
-            />
-            {errors.password && (
-              <p role="alert" className="text-xs font-medium text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
+              {isSubmitting ? <Loader2 className="animate-spin" /> : "Ingresar"}
+            </button>
+          </form>
+        </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full min-h-[44px] mt-2 text-primary-foreground bg-primary rounded-md font-medium transition-all duration-200 ease-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? "Iniciando sesión..." : "Ingresar"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-sm text-center text-muted-foreground">
+        <p className="mt-8 text-center text-sm text-gray-600">
           ¿No tienes una cuenta?{" "}
           <Link
             to="/register"
-            className="font-semibold text-primary hover:text-primary/80 transition-colors focus-visible:outline-none focus-visible:underline"
+            className="font-semibold text-blue-600 hover:text-blue-500"
           >
-            Regístrate aquí
+            Regístrate ahora
           </Link>
         </p>
       </div>
