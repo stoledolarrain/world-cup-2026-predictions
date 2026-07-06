@@ -1,11 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import useGroupDetail from "../hooks/useGroupDetail";
 import { Trophy, ArrowLeft, Users, Copy, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
 
 export default function GroupDetail() {
-  const { groupId } = useParams(); // Obtenemos el ID del grupo de la URL
+  const { groupId } = useParams();
   const { leaderboard, inviteCode, isLoading, error, fetchGroupDetails } =
     useGroupDetail(groupId);
   const [copied, setCopied] = useState(false);
@@ -24,7 +23,6 @@ export default function GroupDetail() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Navegación Superior */}
       <Link
         to="/groups"
         className="inline-flex items-center gap-2 text-surface-dark/60 hover:text-primary transition-colors font-medium"
@@ -44,7 +42,6 @@ export default function GroupDetail() {
           </p>
         </div>
 
-        {/* Tarjeta del Código de Invitación */}
         {inviteCode && (
           <div className="bg-surface-muted p-4 rounded-xl border border-border flex items-center gap-4 w-full md:w-auto">
             <div>
@@ -74,7 +71,6 @@ export default function GroupDetail() {
         )}
       </div>
 
-      {/* Estado de Carga / Error */}
       {error && (
         <div className="bg-error/10 text-error p-4 rounded-lg border border-error/20">
           {error}
@@ -86,7 +82,6 @@ export default function GroupDetail() {
         </div>
       )}
 
-      {/* Tabla de Posiciones */}
       {!isLoading && !error && leaderboard.length > 0 && (
         <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">

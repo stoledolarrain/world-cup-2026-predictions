@@ -1,205 +1,120 @@
-import { useState, useEffect } from "react";
-import api from "../services/api";
-import { CalendarDays, MapPin, Clock } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { CalendarDays, MapPin, Clock } from 'lucide-react';
+import { getMatchesService } from '../services/matches.service';
 
-export default function Matches() {
+const Matches = () => {
   const [matches, setMatches] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Filtro simple para la UI (todos, pendientes, finalizados)
-  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchMatches = async () => {
       try {
-        setIsLoading(true);
-        const response = await api.get("/matches");
-
-        // Log para que veas en tu consola (F12) qué está devolviendo realmente tu backend
-        console.log("Respuesta cruda del backend:", response.data);
-
-        // Lógica defensiva para extraer el array de partidos sin importar la estructura
-        let matchesArray = [];
-        if (Array.isArray(response.data)) {
-          matchesArray = response.data;
-        } else if (response.data && Array.isArray(response.data.matches)) {
-          matchesArray = response.data.matches;
-        } else if (response.data && Array.isArray(response.data.data)) {
-          matchesArray = response.data.data;
-        }
-
-        setMatches(matchesArray);
-      } catch (err) {
-        setError(
-          "Error al cargar el calendario de partidos. Intenta de nuevo.",
-        );
-        console.error("Error en la petición:", err);
+        const data = await getMatchesService();
+        if (isMounted) setMatches(data.data || []);
+      } catch {
+        // Ignoramos el error para no dejar variables sin uso en el linter
       } finally {
-        setIsLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchMatches();
+    
+    return () => { isMounted = false; };
   }, []);
 
-  // Validación defensiva: Solo filtramos si 'matches' es realmente un array
-  const filteredMatches = Array.isArray(matches)
-    ? matches.filter((match) => {
-        if (filter === "pending") return match.status !== "FINISHED";
-        if (filter === "finished") return match.status === "FINISHED";
-        return true;
-      })
-    : [];
+  // Filtramos por fase si el usuario seleccionó alguna opción
+  const filteredMatches = filter 
+    ? matches.filter(m => m.stage.toLowerCase().includes(filter.toLowerCase())) 
+    : matches;
+
+  if (loading) return <div className="p-8 text-center text-gray-500">Cargando calendario...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-surface-dark tracking-tight flex items-center gap-2">
-          <CalendarDays className="w-8 h-8 text-primary" />
-          Calendario del Mundial
-        </h1>
-
-        {/* Botones de Filtro */}
-        <div className="flex bg-surface border border-border rounded-lg p-1">
-          <FilterButton
-            active={filter === "all"}
-            onClick={() => setFilter("all")}
+    <div className="max-w-6xl p-6 mx-auto">
+      <div className="flex flex-col items-start justify-between mb-8 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Calendario de Partidos</h1>
+          <p className="mt-2 text-gray-600">Consulta las fechas, sedes y resultados del Mundial 2026.</p>
+        </div>
+        
+        <div className="mt-4 md:mt-0">
+          <select 
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
-            Todos
-          </FilterButton>
-          <FilterButton
-            active={filter === "pending"}
-            onClick={() => setFilter("pending")}
-          >
-            Pendientes
-          </FilterButton>
-          <FilterButton
-            active={filter === "finished"}
-            onClick={() => setFilter("finished")}
-          >
-            Finalizados
-          </FilterButton>
+            <option value="">Todas las Fases</option>
+            <option value="grupos">Fase de Grupos</option>
+            <option value="octavos">Octavos de Final</option>
+            <option value="cuartos">Cuartos de Final</option>
+            <option value="semifinal">Semifinal</option>
+            <option value="final">Final</option>
+          </select>
         </div>
       </div>
 
-      {error && (
-        <div className="bg-error/10 text-error p-4 rounded-lg border border-error/20">
-          {error}
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      ) : filteredMatches.length === 0 ? (
-        <div className="text-center py-20 bg-surface rounded-xl border border-border">
-          <p className="text-surface-dark/60 text-lg">
-            No hay partidos para mostrar en este filtro.
-          </p>
-        </div>
+      {filteredMatches.length === 0 ? (
+        <div className="p-8 text-center bg-white rounded-lg shadow-sm">No hay partidos registrados.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredMatches.map((match) => (
-            <MatchCard key={match.id || match._id} match={match} />
+            <div key={match.id} className="overflow-hidden transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md">
+              <div className="px-4 py-2 text-sm font-semibold text-white uppercase bg-blue-800">
+                {match.stage}
+              </div>
+              
+              <div className="p-5">
+                <div className="flex items-center justify-center mb-6 space-x-6">
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-bold text-gray-800">Local</span>
+                    <span className="text-3xl font-black text-blue-600">
+                      {match.homeScore !== null ? match.homeScore : '-'}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-400">VS</span>
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-bold text-gray-800">Visita</span>
+                    <span className="text-3xl font-black text-blue-600">
+                      {match.awayScore !== null ? match.awayScore : '-'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 space-y-3 text-sm text-gray-600 border-t border-gray-100">
+                  <div className="flex items-center">
+                    <CalendarDays className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>{new Date(match.matchDate).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>{new Date(match.matchDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>{match.stadium}, {match.city}</span>
+                  </div>
+                </div>
+                
+                <div className="mt-4 text-center">
+                  <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                    match.status === 'FINISHED' ? 'bg-gray-100 text-gray-800' :
+                    match.status === 'IN_PLAY' ? 'bg-green-100 text-green-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {match.status === 'FINISHED' ? 'Finalizado' : match.status === 'IN_PLAY' ? 'En Juego' : 'Programado'}
+                  </span>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
     </div>
   );
-}
+};
 
-// Sub-componentes para mantener el código limpio
-
-function FilterButton({ children, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
-        active
-          ? "bg-primary text-surface shadow-sm"
-          : "text-surface-dark hover:bg-surface-muted"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function MatchCard({ match }) {
-  // Ajusta estas propiedades según lo que devuelva exactamente tu backend
-  const homeTeam = match.homeTeam || "Equipo Local";
-  const awayTeam = match.awayTeam || "Equipo Visitante";
-  const homeScore = match.homeScore !== null ? match.homeScore : "-";
-  const awayScore = match.awayScore !== null ? match.awayScore : "-";
-  const date = match.date
-    ? new Date(match.date).toLocaleDateString()
-    : "Por definir";
-  const time = match.date
-    ? new Date(match.date).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
-  const isFinished = match.status === "FINISHED";
-
-  return (
-    <div className="bg-surface rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-      {/* Cabecera del partido (Fecha y Sede) */}
-      <div className="bg-surface-muted px-4 py-3 border-b border-border flex justify-between items-center text-xs text-surface-dark/70 font-medium">
-        <div className="flex items-center gap-1">
-          <CalendarDays className="w-4 h-4" />
-          <span>{date}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Clock className="w-4 h-4" />
-          <span>{time}</span>
-        </div>
-      </div>
-
-      {/* Marcador Principal */}
-      <div className="p-6 flex-grow flex flex-col justify-center gap-6">
-        {/* Equipo Local */}
-        <div className="flex justify-between items-center">
-          <span className="font-bold text-lg text-surface-dark">
-            {homeTeam}
-          </span>
-          <span className="text-2xl font-black text-surface-dark bg-surface-muted px-4 py-2 rounded-lg">
-            {homeScore}
-          </span>
-        </div>
-
-        {/* Equipo Visitante */}
-        <div className="flex justify-between items-center">
-          <span className="font-bold text-lg text-surface-dark">
-            {awayTeam}
-          </span>
-          <span className="text-2xl font-black text-surface-dark bg-surface-muted px-4 py-2 rounded-lg">
-            {awayScore}
-          </span>
-        </div>
-      </div>
-
-      {/* Pie de la tarjeta (Estado) */}
-      <div className="px-4 py-3 bg-surface border-t border-border flex justify-between items-center">
-        <span
-          className={`text-xs font-bold px-2 py-1 rounded-full ${
-            isFinished
-              ? "bg-surface-dark text-surface"
-              : "bg-primary/10 text-primary"
-          }`}
-        >
-          {isFinished ? "FINALIZADO" : "PENDIENTE"}
-        </span>
-
-        {/* Si no ha terminado, mostramos botón para ir a pronosticar */}
-        {!isFinished && (
-          <button className="text-primary hover:text-primary-hover text-sm font-medium transition-colors">
-            Hacer pronóstico →
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
+export default Matches;

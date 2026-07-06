@@ -1,130 +1,94 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
-import { User } from "lucide-react";
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { registerService } from '../services/auth.service';
 
-export default function Register() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+const registerSchema = z.object({
+  name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+  email: z.string().min(1, 'El correo electrónico es obligatorio').email('Formato de correo inválido'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres')
+});
+
+const Register = () => {
   const navigate = useNavigate();
+  const [apiError, setApiError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(registerSchema)
+  });
 
+  const onSubmit = async (data) => {
+    setApiError('');
+    setSuccessMsg('');
     try {
-      const response = await api.post("/auth/register", {
-        name,
-        email,
-        password,
-      });
-      // Si el registro devuelve un token, lo logueamos directo. Si no, lo mandamos al login.
-      if (response.data.token) {
-        login(response.data.token);
-        navigate("/dashboard");
-      } else {
-        navigate("/login");
-      }
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Error al crear la cuenta. Intenta de nuevo.",
-      );
-    } finally {
-      setIsLoading(false);
+      await registerService(data);
+      setSuccessMsg('¡Registro exitoso! Redirigiendo al inicio de sesión...');
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (error) {
+      setApiError(error.response?.data?.message || 'Ocurrió un error al registrarse');
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-surface p-8 rounded-xl shadow-sm border border-border">
-        <div className="flex justify-center mb-6">
-          <div className="bg-surface-muted p-3 rounded-full">
-            <User className="w-8 h-8 text-primary" />
-          </div>
-        </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+        <h2 className="mb-6 text-3xl font-bold text-center text-gray-800">Crear Cuenta</h2>
+        
+        {apiError && <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">{apiError}</div>}
+        {successMsg && <div className="p-3 mb-4 text-sm text-green-700 bg-green-100 rounded-md">{successMsg}</div>}
 
-        <h1 className="text-2xl font-bold text-center text-surface-dark mb-6">
-          Crear Cuenta
-        </h1>
-
-        {error && (
-          <div
-            className="bg-error/10 border border-error text-error text-sm p-3 rounded-md mb-6"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-surface-dark mb-1">
-              Nombre Completo
-            </label>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Nombre Completo</label>
             <input
               type="text"
-              required
-              className="w-full min-h-[44px] px-4 py-2 rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+              {...register('name')}
+              className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="Juan Pérez"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
             />
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-surface-dark mb-1">
-              Correo Electrónico
-            </label>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Correo Electrónico</label>
             <input
               type="email"
-              required
-              className="w-full min-h-[44px] px-4 py-2 rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-              placeholder="correo@ejemplo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...register('email')}
+              className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="tu@correo.com"
             />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-surface-dark mb-1">
-              Contraseña
-            </label>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Contraseña</label>
             <input
               type="password"
-              required
-              className="w-full min-h-[44px] px-4 py-2 rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+              {...register('password')}
+              className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
             />
+            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full min-h-[44px] bg-primary text-surface font-semibold rounded-md hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2 flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="w-full py-2 text-white transition-colors bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
           >
-            {isLoading ? "Registrando..." : "Comenzar a jugar"}
+            {isSubmitting ? 'Registrando...' : 'Registrarse'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-surface-dark/70">
-          ¿Ya tienes una cuenta?{" "}
-          <Link
-            to="/login"
-            className="text-primary hover:underline font-medium"
-          >
-            Inicia sesión
-          </Link>
+        <p className="mt-4 text-sm text-center text-gray-600">
+          ¿Ya tienes cuenta? <Link to="/login" className="text-blue-600 hover:underline">Inicia sesión</Link>
         </p>
       </div>
     </div>
   );
-}
+};
+
+export default Register;
