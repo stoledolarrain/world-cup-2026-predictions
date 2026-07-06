@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",                                  /* Versión de JavaScript a la que se compilará */
     "module": "CommonJS",                                /* Sistema de módulos para Node.js */
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "outDir": "./dist",                                  /* Carpeta donde se guardará el código compilado */
     "rootDir": "./src",                                  /* Carpeta donde está tu código fuente */
     "strict": true,                                      /* Activa todas las comprobaciones estrictas de TS */
@@ -10,7 +10,6 @@
     "skipLibCheck": true,                                /* Evita chequear los tipos de las librerías (hace que compile más rápido) */
     "forceConsistentCasingInFileNames": true,
     
-    /* 👇 ESTAS 3 LÍNEAS SON LAS QUE SOLUCIONAN TU ERROR 👇 */
     "experimentalDecorators": true,                      /* Habilita el uso de @Decoradores */
     "emitDecoratorMetadata": true,                       /* Permite que TypeORM lea los tipos de datos */
     "strictPropertyInitialization": false                /* Evita que TS te obligue a inicializar las variables en el constructor (ideal para TypeORM) */

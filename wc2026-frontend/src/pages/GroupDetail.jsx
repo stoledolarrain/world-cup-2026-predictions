@@ -5,7 +5,6 @@ import { Trophy, ArrowLeft, Users, Copy, CheckCircle2 } from "lucide-react";
 
 export default function GroupDetail() {
   const { groupId } = useParams();
-<<<<<<< HEAD
   const {
     leaderboard = [],
     inviteCode = "",
@@ -13,10 +12,6 @@ export default function GroupDetail() {
     error,
     fetchGroupDetails,
   } = useGroupDetail(groupId);
-=======
-  const { leaderboard, inviteCode, isLoading, error, fetchGroupDetails } =
-    useGroupDetail(groupId);
->>>>>>> origin/main
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -96,7 +91,6 @@ export default function GroupDetail() {
         </div>
       )}
 
-<<<<<<< HEAD
       {/* Tabla de Posiciones */}
       {!isLoading &&
         !error &&
@@ -116,23 +110,6 @@ export default function GroupDetail() {
                   {leaderboard.map((user, index) => {
                     const position = index + 1;
                     const isTop3 = position <= 3;
-=======
-      {!isLoading && !error && leaderboard.length > 0 && (
-        <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-muted border-b border-border text-surface-dark/70 text-sm uppercase tracking-wider">
-                  <th className="p-4 font-semibold w-24 text-center">Pos</th>
-                  <th className="p-4 font-semibold">Jugador</th>
-                  <th className="p-4 font-semibold text-right">Puntos</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {leaderboard.map((user, index) => {
-                  const position = index + 1;
-                  const isTop3 = position <= 3;
->>>>>>> origin/main
 
                     return (
                       <tr
